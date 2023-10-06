@@ -181,7 +181,7 @@ loaddll("D:\\Videos\\lab\\libfftw3f-3.dll")
 Import("InpaintDelogo.avsi")
     """)
     f.write( """
-DirectShowSource("{}")
+FFmpegSource2("{}")
 InpaintDelogo(Loc="40,860,1840,220", Show=4, DynMask=4, DynTune=210, DynMask4H=180)
 SubsMask2Img(ImgDir="{}")
 
