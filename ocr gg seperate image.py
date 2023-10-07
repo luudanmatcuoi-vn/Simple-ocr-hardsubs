@@ -1,20 +1,25 @@
 #!/usr/bin/env python
+
+# Author       : Luudanmatcuoi
+# yt link   : https://www.youtube.com/channel/UCdyAb9TAX1qQ5R2-c91-x8g
+# GitHub link  : https://github.com/luudanmatcuoi-vn
+
 import argparse, threading, time
 from pathlib import Path
-from os import listdir
+from os import listdir, system
 from os.path import isfile, join
 
 lock = threading.Lock()
-max_threads = 30
+max_threads = 40
 
-def write_ocr_raw_result(res):
-    lock.acquire() # thread blocks at this line until it can obtain lock
+# def write_ocr_raw_result(res):
+#     lock.acquire() # thread blocks at this line until it can obtain lock
 
-    f = open("ocr_raw_result.txt", "a", encoding = "utf8")
-    f.write( res + "\n")
-    f.close()
+#     f = open("ocr_raw_result.txt", "a", encoding = "utf8")
+#     f.write( res + "\n")
+#     f.close()
 
-    lock.release()
+#     lock.release()
 
 def detect_text(path):
     print("start thread")
@@ -40,6 +45,7 @@ def detect_text(path):
 
     # Write to files:
     path = "ocr_result\\" + path[:path.rfind(".")]+".txt"
+    path = path.replace("cleared_image\\","")
     Path(path[:path.rfind("\\")]).mkdir(parents=True, exist_ok=True)
     f = open(path, "w", encoding = "utf8")
     try:
@@ -48,8 +54,7 @@ def detect_text(path):
         pass
     f.close()
 
-    write_ocr_raw_result( path + "\t" + str(result) )
-
+    # write_ocr_raw_result( path + "\t" + str(result) )
     return True
 
     if response.error.message:
@@ -59,10 +64,20 @@ def detect_text(path):
         )
     # [END vision_python_migration_text_detection]
 
+## Detect root_path
+print("\nDrag and drop A folder contain images to start clean.\nNote: Folder must have the same directory with python script\n")
 
-root_path = "Tap_05_Thanh_N_Ceclilia_Va_Mc_S_Lawrence_Saint_Cecilia_and_Pastor_Lawrence_White_Saint_and_Black_Pastor_2023_HDVietSub"
+if len(sys.argv)==1:
+    root_path = input("folder :") 
+else:
+    # args.folder = sorted(args.folder)
+    root_path = str(sys.argv[1])
+    if root_path[0]=="'": root_path = root_path[1:]
+    if root_path[-1]=="'": root_path = root_path[:-1]
 
-listfile = [f for f in listdir(root_path) if isfile(join(root_path, f) ) and ".txt" not in f and ".xml" not in f and ".sup" not in f]
+root_path = root_path.split("\\")[-1]
+
+listfile = [f for f in listdir(join("cleared_image",root_path)) if isfile(join("cleared_image",root_path, f) ) and ".txt" not in f and ".xml" not in f and ".sup" not in f]
 
 f= open("ocr_raw_result.txt", "r", encoding= "utf8")
 already_ocr = f.read().split("\n")
@@ -72,7 +87,7 @@ f.close()
 threads = []
 
 for file in listfile:
-    temp = join(root_path, file)
+    temp = join("cleared_image",root_path, file)
     temp = temp[:temp.rfind(".")] + ".txt"
     if temp in already_ocr:
         pass
@@ -85,6 +100,9 @@ for file in listfile:
             else:
                 break
 
-        th = threading.Thread(target=detect_text, args=( join(root_path, file), ) )
+        th = threading.Thread(target=detect_text, args=( join("cleared_image",root_path, file), ) )
         threads.append(th)
         th.start()
+
+print("done")
+system('pause')

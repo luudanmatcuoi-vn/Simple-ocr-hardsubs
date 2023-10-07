@@ -1,7 +1,15 @@
-import os, argparse
+
+# Author       : Luudanmatcuoi
+# yt link   : https://www.youtube.com/channel/UCdyAb9TAX1qQ5R2-c91-x8g
+# GitHub link  : https://github.com/luudanmatcuoi-vn
+
+import argparse, cv2
+from os import rename, system
 from os.path import join, split
 from pathlib import Path
 import re
+
+#crop = "40,550,1200,160"
 
 def no_accent_vietnamese(s):
     s = s
@@ -153,40 +161,73 @@ parser.add_argument('files', metavar='files', type=Path , nargs='+',
                     help='ass files')
 args = parser.parse_args()
 args.files = sorted(args.files)
-print(args.files)
-
-
 
 for path in args.files:
     path = str(path)
+    # Delete single quote mark
     if path[0]=="'": path = path[1:]
     if path[-1]=="'": path = path[:-1]
-
-    path = split(path)
     
+    # rename, create folder
+    path = split(path)
     temp = path[1]
     path = path[0]
     file = temp.replace(" ","_")
     file = compound_unicode(file)
     file = no_accent_vietnamese(file)
     file = "".join([g for g in file if bool(re.search(r"[a-zA-Z0-9\_\.]+", g)) ])
-
-    os.rename(join(path,temp), join(path,file))
+    rename(join(path,temp), join(path,file))
     Path( join(path, file[:file.rfind(".")]) ).mkdir(parents=True, exist_ok=True)
+    
+    print("Handle file: ",file)
+    vid = cv2.VideoCapture(join(path,file))
+    height = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    width = vid.get(cv2.CAP_PROP_FRAME_WIDTH)
+    
+    if 'crop' in globals():
+        pass
+    else:
+        if height//1 == 1080:
+            crop = "40,860,1840,200"
+        elif height//1 == 720:
+            crop = "40,550,1200,160"
+        else:
+            crop = "40,550,1200,160"
 
     f= open(file+".avs","w", encoding = "utf8")
 
-    f.write( """
-loaddll("D:\\Videos\\lab\\libfftw3f-3.dll")
+    f.write( """# Author       : luudanmatcuoi
+# Run with AviSynth+ and InpaintDelogo plugin, using AvsPmod to open/run files.
+# InpaintDelogo plugin: https://github.com/Purfview/InpaintDelogo
+
+# Step 1: Location area contain text using InpaintLoc. Adjust "Loc" crop parameters around subtitle (aka "Left,Top,-Right,-Bottom")
+# Step 2: Adjust DynTune and DynMask4H for best result...
+# DynTune: Binarization threshold [luma/brighness level]. (from 1 to 254; default: 200).
+#          Lower values -> mask expands more into the darker areas of video.
+#          Set highest where logo/subtitle is still visible.
+#          Luma range mask can be made with string: "180 - 200".
+# (Là cái lấy độ sáng của chữ, để càng cao thì lấy càng nhiều chữ nhưng dễ lẫn với đồ xung quanh)
+
+# DynMask4H:  Binarization threshold for the subtitles halo (from 1 to 200; default: 60).
+#             Set lowest where the subtitle halo masking is visible and clear. If too low then some letters can disappear.
+#             Use "Show=6" to finetune it.
+# (Là độ khác màu giữa viền và chữ, để thấp quá thì mất chữ, để cao quá thì ko phân biệt đc viền vs chữ... nói chung tự chỉnh )
+
+
+#loaddll("D:\\Videos\\lab\\libfftw3f-3.dll")
 Import("InpaintDelogo.avsi")
-    """)
-    f.write( """
+
 FFmpegSource2("{}")
-InpaintDelogo(Loc="40,860,1840,220", Show=4, DynMask=4, DynTune=210, DynMask4H=180)
+
+#InpaintLoc(Loc="{}")
+
+InpaintDelogo(Loc="{}", Show=4, DynMask=4, DynTune=210, DynMask4H=180)
+
 SubsMask2Img(ImgDir="{}")
 
-""".format( join(path, file) , join(path, file[:file.rfind(".")]) ) )
+""".format( join(path, file), crop, crop , join(path, file[:file.rfind(".")]) ) )
 
 f.close()
+
 print("done")
-input()
+system('pause')
