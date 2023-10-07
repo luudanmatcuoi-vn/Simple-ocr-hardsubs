@@ -10,9 +10,14 @@
 
 ## Usages
 Drop videos to `create_avs_script.py`     -> create avs script
+
 Drop folder to `gg_clean_image_text.py`   -> clean images
+
 Drop folder to `ocr gg seperate image.py` -> OCR
+
 Run `create srt from txt files.py`        -> Make srt files (it's remove some japanese lines)
+
+
 
 You can change parameters by editing python script.
 
