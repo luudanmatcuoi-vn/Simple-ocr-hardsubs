@@ -1,4 +1,4 @@
-# avisynth-ocr-hardsub
+# Simple OCR Hardsubs
 
 <br>--> Extract hardsub to images using InpaintDelogo <br>--> detect text area using Cloud Vision API and clean images <br>--> Ocr using Cloud Vision API
 
