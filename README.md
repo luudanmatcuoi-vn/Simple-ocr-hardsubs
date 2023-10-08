@@ -7,6 +7,7 @@
 - run cmd `pip install -r requirements.txt`
 - Install AviSynth+ : [Link](https://avs-plus.net/)
 - Recommend using AvsPmod to edit avs script
+- ffmpeg for window [link](https://ffmpeg.org/download.html)
 - Install InpaintDelogo plugin: [Link](https://github.com/Purfview/InpaintDelogo)
 - Everything else :sunglasses: [Link](https://cloud.google.com/vision/docs/detect-labels-image-client-libraries)https://cloud.google.com/vision/docs/detect-labels-image-client-libraries
 
