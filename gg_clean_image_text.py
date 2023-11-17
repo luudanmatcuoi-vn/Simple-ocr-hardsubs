@@ -257,10 +257,10 @@ for bl in range(0,len(listfile),images_combine):
 
     new_image.save("merged_image.jpg","JPEG")
     
-    temp_db = image_database
+    org_image = new_image
 
     # FAST METHOD: detect lines making lines masking image
-    lines_database = detect_document_lines(join( "merged_image.jpg" ), temp_db, center = center)
+    lines_database = detect_document_lines(join( "merged_image.jpg" ), image_database, center = center)
     lines_mask_img = Image.new('RGB',(image_width, total_height), (0,0,0))
     for d in lines_database:
         for box in d["lines_box"]:
@@ -272,73 +272,21 @@ for bl in range(0,len(listfile),images_combine):
     syl_size = [abs(syl.bounding_box.vertices[0].x-syl.bounding_box.vertices[1].x) for blockk in lines_database for paraa in blockk["para"] for woo in paraa["raw"].words for syl in woo.symbols]
     mean_syl_size = sum(syl_size)/len(syl_size)
     print("mean_syl_size: ",mean_syl_size)
-    # aply mask and make delete img 
+    # # apply mask and make delete img 
     np_img = np.array(new_image)[:,:]
-    delete_img = np.zeros_like(np_img)
-    delete_img[np.logical_and(np_img,np.invert(lines_mask_img))] = 255
-    #Flood delete img to actual remove object
-    
-    checked_img = np.zeros_like(np_img)
-    checked_img = np_img>100
-    (nonzero_x, nonzero_y) = np.nonzero(checked_img)
-    print("Image height: ", np_img.shape[0] )
-    while len(nonzero_x)>0:
-        print("point: " , nonzero_x[0],nonzero_y[0], end = "\r")
-        i = nonzero_x[0]
-        j = nonzero_y[0]
-        if np_img[i][j]>100:
-            true_binary_img = np_img>100
-            flood_img = flood(true_binary_img, (i,j))
-            if delete_img[i][j]==255:
-                np_img[flood_img] = 0
-            else:
-                temp_img = np.sum(flood_img, axis = 0)
-                temp = np.nonzero(temp_img)
-                delta_x = temp[0][-1]-temp[0][0]
-                if delta_x > mean_syl_size*3:
-                    np_img[flood_img] = 0
-            checked_img[flood_img] = False
-            (nonzero_x, nonzero_y) = np.nonzero(checked_img)
+    # delete_img = np.zeros_like(np_img)
+    # delete_img[np.logical_and(np_img,np.invert(lines_mask_img))] = 255
 
 
+    label_img = label(np_img,connectivity=1)
+    delete_img = label_img
+    delete_img[np.where(lines_mask_img>100)] = 0
+    unique_label = np.unique(delete_img)
+    for i in range(len(unique_label)):
+        if i==0:continue
+        np_img[np.where(label_img == unique_label[i])] = 0
 
-    # # SLOW METHOD: detect lines making lines masking image
-    # np_img = np.array(new_image)[:,:]
-    # lines_database = detect_document_lines(join( "merged_image.jpg" ), temp_db)
-    # lines_mask_img = np.zeros_like(np_img)
-    # d = 5
-    # for da in lines_database:
-    #     for e in da["lines_box"]:
-    #         lines_mask_img[e[1]:e[3] ,e[0] :e[2] ] = d
-    #         d+=1
-    # #Flood delete img to actual remove object
-    # threads = []
-    # for i in range(0,np_img.shape[0],step):
-    #     print(i)
-    #     for j in range(0,np_img.shape[1],step):
-    #         if np_img[i][j]>100:
-    #             def mask_(true_binary_img, i, j, ):
-    #                 global np_img
-    #                 true_binary_img = np_img>100
-    #                 flood_img = flood(true_binary_img, (i,j))
-    #                 mask_img = np.zeros_like(np_img)
-    #                 np.putmask(mask_img, flood_img, lines_mask_img)
-    #                 unique = np.unique(mask_img)
-    #                 if 0 in unique or len(unique)!=1:
-    #                     np_img[flood_img] = 0
-    #                 return True
-    #             while True:
-    #                 threads = [t for t in threads if t.is_alive()]
-    #                 print("threads: ",len(threads),"\n")
-    #                 if len(threads) > max_threads:
-    #                     time.sleep(2)
-    #                 else:
-    #                     break
-    #             true_binary_img = np_img>100
-    #             th = threading.Thread(target=mask_, args=( true_binary_img, i, j, ) )
-    #             threads.append(th)
-    #             th.start()
-
+        print(f"{i}/{len(unique_label)}", end = "\r")
     
     # Write to files:
     new_image = Image.fromarray(np_img, 'L')
@@ -361,18 +309,13 @@ for bl in range(0,len(listfile),images_combine):
     # lines_mask_img.save(path+"-lines_mask_img.jpg","JPEG")
 
     w, h = new_image.size
-    debug_img = Image.new('L', (w*2, h))
-    debug_img.paste(new_image, (0,0))
+    debug_img = Image.new('L', (w*3, h))
+    debug_img.paste(org_image, (0,0))
     debug_img.paste(lines_mask_img, (w,0))
+    debug_img.paste(new_image, (w*2,0))
     debug_img.save(path+"-debug.jpg","JPEG")
 
-    # break
-
 system("pause")
-
-
-
-
 
 # # print(listfile)
 
